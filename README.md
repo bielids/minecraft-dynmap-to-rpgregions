@@ -11,20 +11,21 @@ Place these files in plugins/RPGRegions, update `worldName` to your world's name
 - You used polygons to create your markers/regions in Dynmap
 - Your minecraft server is running in a screen under the `mcs` name
 
-## To do
-
-- setup watchdog to watch for changes in dynmap's markers.yml and run script whenever a change occurs (unattended mode already implemented)
-- probably ought to use more classes
-- add logging
-
-
 ## How to make this work for your server 
 
 - make sure that you follow all the assumptions mentioned above 
 - update the world name and UID in rpgregions.default
 - update the `worldName` variable in translateRegions.py
 
-Eventually I'll make this more streamlined but I put this together quickly in the past day. 
+Eventually I'll make this more streamlined but I put this together quickly in the past day.
+
+## To do
+
+- add wrapper for this whole thing to allow people to quickly update all custom values (ex world UID or name)
+- - ie. rpgregions.default and translateRegions.py
+- setup watchdog to watch for changes in dynmap's markers.yml and run script whenever a change occurs (unattended mode already implemented)
+- probably ought to use more classes
+- add logging
 
 ## Notes 
 
