@@ -11,6 +11,13 @@ Place these files in plugins/RPGRegions, update `worldName` to your world's name
 - You used polygons to create your markers/regions in Dynmap
 - Your minecraft server is running in a screen under the `mcs` name
 
+## To do
+
+- setup watchdog to watch for changes in dynmap's markers.yml and run script whenever a change occurs (unattended mode already implemented)
+- probably ought to use more classes
+- add logging
+
+
 ## Notes 
 
 I wrote this for myself. If this breaks your server, that's on you. 
