@@ -17,7 +17,7 @@ Place these files in plugins/RPGRegions, update `worldName` to your world's name
 - update the world name and UID in rpgregions.default
 - update the `worldName` variable in translateRegions.py
 
-Eventually I'll make this more streamlined but I put this together quickly in the past day.
+Eventually I'll make this more streamlined but I put this together quickly in a day.
 
 ## To do
 
