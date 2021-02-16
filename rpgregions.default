@@ -1,0 +1,50 @@
+{
+  "world": "6755ca4c-c5f5-4bb7-8ea0-bc12e0cd538d",
+  "rewards": [
+    {
+      "type": "net.islandearth.rpgregions.rewards.ExperienceReward",
+      "properties": {
+        "xp": 10
+      }
+    }
+  ],
+  "sound": "UI_TOAST_CHALLENGE_COMPLETE",
+  "icon": "TOTEM_OF_UNDYING",
+  "undiscoveredIcon": "TOTEM_OF_UNDYING",
+  "iconCommand": [],
+  "showCoords": false,
+  "location": {
+    "world": "JarlsWorld",
+    "x": 666,
+    "y": 111,
+    "z": 420,
+    "pitch": 69,
+    "yaw": 69
+  },
+  "hints": [],
+  "showHint": false,
+  "teleportable": false,
+  "hidden": false,
+  "discoverable": true,
+  "effects": [],
+  "requirements": [
+    {
+      "type": "net.islandearth.rpgregions.requirements.LevelRequirement",
+      "properties": {
+        "level": 5,
+        "preventType": "TELEPORT"
+      }
+    }
+  ],
+  "discoveredLore": [],
+  "alwaysShowTitles": false,
+  "title": [
+    "&cNew region discovered"
+  ],
+  "discoveredTitle": null,
+  "discoveredSubtitle": [
+    "Run '/rpgregions list' for more info"
+  ],
+  "regenerate": null,
+  "teleportCooldown": null
+}
