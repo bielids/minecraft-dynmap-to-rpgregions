@@ -1,0 +1,8 @@
+default:
+    members: {}
+    flags: {passthrough: allow}
+    owners: {}
+    type: poly2d
+    priority: 0
+    max-y: 256
+    min-y: 0
