@@ -6,6 +6,7 @@ import json
 import subprocess as sp
 import argparse
 
+worldName = 'JarlsWorld'
 run_screen = lambda x: sp.run(f"bash sendScreenCMD.sh {x}".split(),shell=False, capture_output=True,encoding='latin-1').stdout
 
 class colour:
@@ -36,9 +37,9 @@ def title_except(s, exceptions):
 
 def load_files():
     try:
-        with open(r'/home/minecraft/JarlsServer/plugins/dynmap/markers.yml', 'r') as file:
+        with open(r'../dynmap/markers.yml', 'r') as file:
             dynmap_conf = yaml.load(file, Loader=yaml.Loader)
-        with open(r'/home/minecraft/JarlsServer/plugins/WorldGuard/worlds/JarlsWorld/regions.yml', 'r') as file:
+        with open(f'../WorldGuard/worlds/{worldName}/regions.yml', 'r') as file:
             worldguard_conf = yaml.load(file, Loader=yaml.Loader)
     except:
         print("welp, that didn't work")
@@ -86,9 +87,9 @@ def write_worldguard(wg_conf, dm_conf, wg_def):
     if wg_changes:
         print('Writing changes to WorldGuard')
         try:
-            with open(r'/home/minecraft/JarlsServer/plugins/WorldGuard/worlds/JarlsWorld/regions.yml', 'w') as write_out:
+            with open(f'../WorldGuard/worlds/{worldName}/regions.yml', 'w') as write_out:
                 out = yaml.dump(wg_conf, write_out)
-                print(f"{colour.GREEN}Wrote all regions to plugins/WorldGuard/worlds/JarlsWorld/regions.yml{colour.END}")
+                print(f"{colour.GREEN}Wrote all regions to plugins/WorldGuard/worlds/{worldName}/regions.yml{colour.END}")
                 run_screen("rg reload")
         except:
             print('fuck')
