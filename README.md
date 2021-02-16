@@ -26,6 +26,7 @@ Eventually I'll make this more streamlined but I put this together quickly in th
 - setup watchdog to watch for changes in dynmap's markers.yml and run script whenever a change occurs (unattended mode already implemented)
 - probably ought to use more classes
 - add logging
+- allow modification of RPGRegion region attributes before creating json file (ex. change reward or title/subtitle)
 
 ## Notes 
 
