@@ -18,6 +18,14 @@ Place these files in plugins/RPGRegions, update `worldName` to your world's name
 - add logging
 
 
+## How to make this work for your server 
+
+- make sure that you follow all the assumptions mentioned above 
+- update the world name and UID in rpgregions.default
+- update the `worldName` variable in translateRegions.py
+
+Eventually I'll make this more streamlined but I put this together quickly in the past day. 
+
 ## Notes 
 
 I wrote this for myself. If this breaks your server, that's on you. 
