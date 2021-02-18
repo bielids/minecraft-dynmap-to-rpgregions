@@ -26,12 +26,13 @@ class clr:
    END = '\033[0m'
 
 parser = argparse.ArgumentParser(
-    description="Covert dynmap regions to WorldGuard and RPGRegions")
-parser.add_argument("-u", "--unattended", nargs='?', const=True, default=False, help="Will run unattended, use default options everywhere")
+    description="Convert dynmap regions to WorldGuard and RPGRegions")
+parser.add_argument("-u", "--unattended", nargs='?', const=True, default=False, dest='unattended', help="Will run unattended, use default options everywhere")
 parser.add_argument("--wg-only", nargs='?', const=True, default=False, help="Will convert to WorldGuard only")
 parser.add_argument("--rpg-only", nargs='?', const=True, default=False, help="Will convert to RPGRegions only (dangerous)")
 args = parser.parse_args()
 
+unattended = args.unattended
 
 logging.basicConfig(
     level=logging.DEBUG,
@@ -101,6 +102,9 @@ def get_world_uuid(world_name):
 
 
 def initialise_config():
+    if unattended:
+        logging.error('Please run attended to create config first')
+        exit(1)
     global config
     config = {}
     logging.debug('Starting user-interactive config initialisation')
@@ -141,10 +145,15 @@ def load_defaults():
     try:
         with open(r'worldguard.default', 'r') as file:
             wg_def = yaml.load(file, Loader=yaml.Loader)
+            logging.info('Loaded WorldGuard defaults')
+    except:
+        logging.error('Unable to load WorldGuard defaults')
+    try:
         with open(r'rpgregions.default', 'r') as file:
             rpg_def = json.load(file)
+            logging.info('Loaded RPGRegions defaults')
     except:
-        print("welp, that didn't work")
+        logging.error('Unable to load RPGRegions defaults')
 
     return (wg_def, rpg_def)
 
@@ -191,7 +200,7 @@ def write_worldguard(wg_conf, dm_conf, wg_def):
     return wg_conf
 
 
-def write_rpgregions(wg_conf, rpg_def, unattended):
+def write_rpgregions(wg_conf, rpg_def):
     logging.debug(f"{'=' * 8} Starting RPGRegions region loading... {'=' * 8}")
     json_out = []
     new_regions_rpg = []
@@ -213,12 +222,14 @@ def write_rpgregions(wg_conf, rpg_def, unattended):
     logging.debug('Starting RPGRegions region generation...')
     for region in new_regions_rpg:
         nr = rpg_def
+        nr['world'] = config['world_uuid']
         nr['id'] = region
         nr['customName'] =  title_except(re.sub('_', ' ', region), articles)
         nr['subtitle'] = \
         [
             title_except(re.sub('_', ' ', region), articles)
         ]
+        nr['location']['world'] = config['world_name']
         try:
             with open(f'../plugins/RPGRegions/regions/{region}.json', 'w') as file:
                 logging.info(f'Writing new region to ../plugins/RPGRegions/regions/{region}.json')
@@ -244,7 +255,7 @@ def main():
     dm_conf, wg_conf = load_files()
     wg_def, rpg_def = load_defaults()
     wg_conf = write_worldguard(wg_conf, dm_conf, wg_def)
-    write_rpgregions(wg_conf, rpg_def, args.unattended)
+    write_rpgregions(wg_conf, rpg_def)
     logging.info(f"{'=' * 8} Region conversion complete. {'=' * 8}")
 
 if __name__ == "__main__":
