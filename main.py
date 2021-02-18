@@ -61,6 +61,7 @@ def title_except(s, exceptions):
 
 def load_config():
     global config
+    logging.debug('Loading config file...')
     if not os.path.exists(config_file):
         initialise_config()
     else:
@@ -73,6 +74,7 @@ def load_config():
             exit(2)
 
 def get_world_name():
+    logging.debug('Getting world name from server.properties...')
     try:
         with open('../server.properties', 'r') as file:
             lvlre = re.compile('^level-name=')
@@ -87,16 +89,20 @@ def get_world_name():
 
 
 def get_world_uuid(world_name):
+    logging.debug(f"Getting world UUID from ../{world_name}/uid.dat")
     try:
         with open(f"../{world_name}/uid.dat", 'rb') as file:
             world_uuid = uuid.UUID(bytes=file.read(16))
             logging.debug(f"Read UUID from ../{world_name}/uid.dat")
     except Exception as err:
         logging.error('Unable to get world UUID. Cannot continue.')
+
     return str(world_uuid)
+
 
 def initialise_config():
     config = {}
+    logging.debug('Starting user-interactive config initialisation')
     print(f"{clr.GREEN}Please initialise your config before starting!\n{clr.END}")
     config['world_name'] = rlinput("What world do you want to export the regions to? ", get_world_name())
     logging.debug(f"{config['world_name']} selected.")
@@ -144,6 +150,7 @@ def load_defaults():
 
 
 def write_worldguard(wg_conf, dm_conf, wg_def):
+    logging.debug('Starting WorldGuard region loading...')
     new_regions_wg = []
     wg_changes = False
     for key in dm_conf['sets']['Counties']['areas'].keys():
@@ -155,6 +162,7 @@ def write_worldguard(wg_conf, dm_conf, wg_def):
             logging.debug(f"Going to create new region called '{region_name}'.")
         else:
             logging.debug(f"'{region_name}' already exists in WorldGuard. Skipping...")
+    logging.debug('Regions acquired, starting point translation')
     for region in new_regions_wg:
         region_name = dm_conf['sets']['Counties']['areas'][region]['label'].lower().replace(' ', '_').strip('') # got lazy, should be removed
         region_name = re.sub('[!@#$()]', '', region_name) # same here :(
@@ -169,7 +177,7 @@ def write_worldguard(wg_conf, dm_conf, wg_def):
         wg_conf['regions'][region_name].update(r)
 
     if wg_changes:
-        print('Writing changes to WorldGuard')
+        logging.info('Writing changes to WorldGuard')
         try:
             with open(f"../plugins/WorldGuard/worlds/{config['world_name']}/regions.yml", 'w') as write_out:
                 out = yaml.dump(wg_conf, write_out)
@@ -184,6 +192,7 @@ def write_worldguard(wg_conf, dm_conf, wg_def):
 
 
 def write_rpgregions(wg_conf, rpg_def, unattended):
+    logging.debug('Starting RPGRegions region loading...')
     json_out = []
     new_regions_rpg = []
     rpg_changes = False
@@ -200,6 +209,7 @@ def write_rpgregions(wg_conf, rpg_def, unattended):
                 new_regions_rpg.append(key)
         else:
             new_regions_rpg.append(key)
+    logging.debug('Starting RPGRegions region generation...')
     for region in new_regions_rpg:
         nr = rpg_def
         nr['id'] = region
@@ -219,6 +229,8 @@ def write_rpgregions(wg_conf, rpg_def, unattended):
         run_screen("rpgregions reload")
         run_screen("rpgregions")
         print(f'{clr.GREEN}Wrote changes to RPGRegions{clr.END}')
+    else:
+        logging.debug('No changes made to RPGRegions.')
 
 
 def main():
@@ -232,8 +244,7 @@ def main():
     wg_def, rpg_def = load_defaults()
     wg_conf = write_worldguard(wg_conf, dm_conf, wg_def)
     write_rpgregions(wg_conf, rpg_def, args.unattended)
-
+    logging.info('Region conversion complete.')
 
 if __name__ == "__main__":
     main()
-
