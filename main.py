@@ -101,6 +101,7 @@ def get_world_uuid(world_name):
 
 
 def initialise_config():
+    global config
     config = {}
     logging.debug('Starting user-interactive config initialisation')
     print(f"{clr.GREEN}Please initialise your config before starting!\n{clr.END}")
@@ -113,7 +114,6 @@ def initialise_config():
             logging.info('Successfully saved config')
     except Exception as err:
         logging.error('Unable to save config')
-    exit(0)
 
 def load_files():
     try:
@@ -150,7 +150,7 @@ def load_defaults():
 
 
 def write_worldguard(wg_conf, dm_conf, wg_def):
-    logging.debug('Starting WorldGuard region loading...')
+    logging.debug(f"{'=' * 8}Starting WorldGuard region loading... {'=' * 8}")
     new_regions_wg = []
     wg_changes = False
     for key in dm_conf['sets']['Counties']['areas'].keys():
@@ -192,7 +192,7 @@ def write_worldguard(wg_conf, dm_conf, wg_def):
 
 
 def write_rpgregions(wg_conf, rpg_def, unattended):
-    logging.debug('Starting RPGRegions region loading...')
+    logging.debug(f"{'=' * 8} Starting RPGRegions region loading... {'=' * 8}")
     json_out = []
     new_regions_rpg = []
     rpg_changes = False
@@ -202,6 +202,7 @@ def write_rpgregions(wg_conf, rpg_def, unattended):
         if os.path.exists(f'../plugins/RPGRegions/regions/{key}.json'):
             overwrite_region = False
             if unattended:
+                logging.debug(f"'{key}' already exists in RPGRegions. Skipping...")
                 overwrite_region = False
             else:
                 overwrite_region = {"y":True,"n":False}[input(f'{key} already exists. Do you wish to overwrite the RPGRegions file? (y/N)').lower().strip() or 'n']
@@ -220,7 +221,7 @@ def write_rpgregions(wg_conf, rpg_def, unattended):
         ]
         try:
             with open(f'../plugins/RPGRegions/regions/{region}.json', 'w') as file:
-                print(f'Writing new region to ../plugins/RPGRegions/regions/{region}.json')
+                logging.info(f'Writing new region to ../plugins/RPGRegions/regions/{region}.json')
                 json.dump(nr, file, indent=2, sort_keys=False)
                 rpg_changes = True
         except:
@@ -228,7 +229,7 @@ def write_rpgregions(wg_conf, rpg_def, unattended):
     if rpg_changes:
         run_screen("rpgregions reload")
         run_screen("rpgregions")
-        print(f'{clr.GREEN}Wrote changes to RPGRegions{clr.END}')
+        logging.info('Wrote changes to RPGRegions')
     else:
         logging.debug('No changes made to RPGRegions.')
 
@@ -244,7 +245,7 @@ def main():
     wg_def, rpg_def = load_defaults()
     wg_conf = write_worldguard(wg_conf, dm_conf, wg_def)
     write_rpgregions(wg_conf, rpg_def, args.unattended)
-    logging.info('Region conversion complete.')
+    logging.info(f"{'=' * 8} Region conversion complete. {'=' * 8}")
 
 if __name__ == "__main__":
     main()
