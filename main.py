@@ -25,15 +25,6 @@ class clr:
    UNDERLINE = '\033[4m'
    END = '\033[0m'
 
-parser = argparse.ArgumentParser(
-    description="Convert dynmap regions to WorldGuard and RPGRegions")
-parser.add_argument("-u", "--unattended", nargs='?', const=True, default=False, dest='unattended', help="Will run unattended, use default options everywhere")
-parser.add_argument("--wg-only", nargs='?', const=True, default=False, help="Will convert to WorldGuard only")
-parser.add_argument("--rpg-only", nargs='?', const=True, default=False, help="Will convert to RPGRegions only (dangerous)")
-args = parser.parse_args()
-
-unattended = args.unattended
-
 logging.basicConfig(
     level=logging.DEBUG,
     format="%(asctime)s [%(levelname)s] %(message)s",
@@ -42,6 +33,33 @@ logging.basicConfig(
         logging.StreamHandler()
     ]
 )
+
+
+def make_wide(formatter, w=120, h=36):
+    """Return a wider HelpFormatter, if possible."""
+    try:
+        # https://stackoverflow.com/a/5464440
+        # beware: "Only the name of this class is considered a public API."
+        kwargs = {'width': w, 'max_help_position': h}
+        formatter(None, **kwargs)
+        return lambda prog: formatter(prog, **kwargs)
+    except TypeError:
+        warnings.warn("argparse help formatter failed, falling back.")
+        return formatter
+
+
+def get_args():
+    global args
+    global unattended
+    parser = argparse.ArgumentParser(
+        formatter_class=make_wide(argparse.ArgumentDefaultsHelpFormatter, w=200, h=46),
+        description="Convert dynmap regions to WorldGuard and RPGRegions")
+    parser.add_argument("-u", "--unattended", nargs='?', const=True, default=False, dest='unattended', help="Will run unattended, use default options everywhere")
+    parser.add_argument("--wg-only", nargs='?', const=True, default=False, help="Will convert to WorldGuard only")
+    parser.add_argument("--rpg-only", nargs='?', const=True, default=False, help="Will convert to RPGRegions only (dangerous)")
+    args = parser.parse_args()
+
+    unattended = args.unattended
 
 
 def rlinput(prompt, prefill=''):
@@ -73,6 +91,7 @@ def load_config():
         except Exception as err:
             logging.error(f'Unable to load config: {err}')
             exit(2)
+
 
 def get_world_name():
     logging.debug('Getting world name from server.properties...')
@@ -118,6 +137,7 @@ def initialise_config():
             logging.info('Successfully saved config')
     except Exception as err:
         logging.error('Unable to save config')
+
 
 def load_files():
     try:
@@ -251,12 +271,25 @@ def main():
         exit(1)
     else:
         logging.debug('Script in correct directory, continuing...')
+    get_args()
+    if unattended:
+        logging.info('Starting script in unattended mode')
+    if args.rpg_only and args.wg_only:
+        logging.warning("You can't eat the cake and have it too, you have to pick. Less arguments please.")
+        exit(1)
     load_config()
     dm_conf, wg_conf = load_files()
     wg_def, rpg_def = load_defaults()
-    wg_conf = write_worldguard(wg_conf, dm_conf, wg_def)
-    write_rpgregions(wg_conf, rpg_def)
+    if not args.rpg_only:
+        wg_conf = write_worldguard(wg_conf, dm_conf, wg_def)
+    else:
+        logging.warning('WorldGuard creation skipped entirely')
+    if not args.wg_only:
+        write_rpgregions(wg_conf, rpg_def)
+    else:
+        logging.warning('RPGRegions creation skipped entirely.')
     logging.info(f"{'=' * 8} Region conversion complete. {'=' * 8}")
+
 
 if __name__ == "__main__":
     main()
