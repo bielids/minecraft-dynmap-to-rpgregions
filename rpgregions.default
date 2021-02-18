@@ -1,5 +1,4 @@
 {
-  "world": "6755ca4c-c5f5-4bb7-8ea0-bc12e0cd538d",
   "rewards": [
     {
       "type": "net.islandearth.rpgregions.rewards.ExperienceReward",
@@ -14,7 +13,6 @@
   "iconCommand": [],
   "showCoords": false,
   "location": {
-    "world": "JarlsWorld",
     "x": 666,
     "y": 111,
     "z": 420,
