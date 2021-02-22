@@ -8,10 +8,24 @@ import argparse
 import logging
 import uuid
 import readline
+import psutil
+
+"""
+Description: This script will convert regions you have created in Dynmap to
+             WorldGuard regions so that they can be used in RPGRegions.
+Special thanks to:
+- EddiePan
+- StackOverflow
+  - https://stackoverflow.com/a/57655311
+  - https://stackoverflow.com/a/3729957
+  - https://stackoverflow.com/a/2533142
+"""
 
 config_file = 'translate_regions.yml'
 log_file = 'translate_regions.log'
-run_screen = lambda x: sp.run(f"bash sendScreenCMD.sh {x}".split(),shell=False, capture_output=True,encoding='latin-1').stdout
+run_screen = lambda x: sp.run(f"bash sendScreenCMD.sh {x}".split(),shell=False, \
+                       capture_output=True,encoding='latin-1').stdout
+run = lambda x: sp.run(x.split(),shell=False, capture_output=True,encoding='latin-1').stdout
 
 class clr:
    PURPLE = '\033[95m'
@@ -54,9 +68,12 @@ def get_args():
     parser = argparse.ArgumentParser(
         formatter_class=make_wide(argparse.ArgumentDefaultsHelpFormatter, w=200, h=46),
         description="Convert dynmap regions to WorldGuard and RPGRegions")
-    parser.add_argument("-u", "--unattended", nargs='?', const=True, default=False, dest='unattended', help="Will run unattended, use default options everywhere")
-    parser.add_argument("--wg-only", nargs='?', const=True, default=False, help="Will convert to WorldGuard only")
-    parser.add_argument("--rpg-only", nargs='?', const=True, default=False, help="Will convert to RPGRegions only (dangerous)")
+    parser.add_argument("-u", "--unattended", nargs='?', const=True, default=False, \
+        dest='unattended', help="Will run unattended, use default options everywhere")
+    parser.add_argument("--wg-only", nargs='?', const=True, default=False, help="Will" \
+        "convert to WorldGuard only")
+    parser.add_argument("--rpg-only", nargs='?', const=True, default=False, help="Will" \
+        "convert to RPGRegions only (dangerous)")
     args = parser.parse_args()
 
     unattended = args.unattended
@@ -65,9 +82,10 @@ def get_args():
 def rlinput(prompt, prefill=''):
    readline.set_startup_hook(lambda: readline.insert_text(prefill))
    try:
-      return input(prompt)  # or raw_input in Python 2
+      return input(f'{prompt}{clr.GREEN}')  # or raw_input in Python 2
    finally:
       readline.set_startup_hook()
+      print('penis', end='')
 
 
 def title_except(s, exceptions):
@@ -92,11 +110,18 @@ def load_config():
             logging.error(f'Unable to load config: {err}')
             exit(2)
 
+def get_server_path():
+    server_path = False
+    for proc in psutil.process_iter(['pid', 'name']):
+        if 'java' in proc.info['name'] and not server_path:
+            server_path = proc.cwd()
+    return server_path
+
 
 def get_world_name():
     logging.debug('Getting world name from server.properties...')
     try:
-        with open('../server.properties', 'r') as file:
+        with open(f"{config['server_path']}/server.properties", 'r') as file:
             lvlre = re.compile('^level-name=')
             for line in file.readlines():
                 if re.match(lvlre, line):
@@ -109,11 +134,11 @@ def get_world_name():
 
 
 def get_world_uuid(world_name):
-    logging.debug(f"Getting world UUID from ../{world_name}/uid.dat")
+    logging.debug(f"Getting world UUID from {config['server_path']}/{world_name}/uid.dat")
     try:
-        with open(f"../{world_name}/uid.dat", 'rb') as file:
+        with open(f"{config['server_path']}/{world_name}/uid.dat", 'rb') as file:
             world_uuid = uuid.UUID(bytes=file.read(16))
-            logging.debug(f"Read UUID from ../{world_name}/uid.dat")
+            logging.debug(f"Read UUID from {config['server_path']}/{world_name}/uid.dat")
     except Exception as err:
         logging.error('Unable to get world UUID. Cannot continue.')
 
@@ -128,7 +153,10 @@ def initialise_config():
     config = {}
     logging.debug('Starting user-interactive config initialisation')
     print(f"{clr.GREEN}Please initialise your config before starting!\n{clr.END}")
-    config['world_name'] = rlinput("What world do you want to export the regions to? ", get_world_name())
+    config['server_path'] = rlinput(f"Where is the Minecraft server located? ", get_server_path())
+    config['world_name'] = rlinput(f"What world do you want to export the regions to? ",
+        get_world_name())
+    print(f"{clr.END}Configuration complete")
     logging.debug(f"{config['world_name']} selected.")
     config['world_uuid'] = get_world_uuid(config['world_name'])
     try:
@@ -142,7 +170,7 @@ def initialise_config():
 def load_files():
     try:
         logging.debug('Loading Dynmap markers file...')
-        with open(r'../plugins/dynmap/markers.yml', 'r') as file:
+        with open(f"{config['server_path']}/plugins/dynmap/markers.yml", 'r') as file:
             dynmap_conf = yaml.load(file, Loader=yaml.Loader)
             logging.info('Loaded Dynmap markers file')
         logging.debug('Loading WorldGuard regions config file')
@@ -150,7 +178,7 @@ def load_files():
         logging.error(f"Unable to load Dynmap file: {err}")
         exit(2)
     try:
-        with open(f"../plugins/WorldGuard/worlds/{config['world_name']}/regions.yml", 'r') as file:
+        with open(f"{config['server_path']}/plugins/WorldGuard/worlds/{config['world_name']}/regions.yml", 'r') as file:
             worldguard_conf = yaml.load(file, Loader=yaml.Loader)
             logging.info('Loaded WorldGuard regions file')
     except Exception as err:
@@ -208,12 +236,12 @@ def write_worldguard(wg_conf, dm_conf, wg_def):
     if wg_changes:
         logging.info('Writing changes to WorldGuard')
         try:
-            with open(f"../plugins/WorldGuard/worlds/{config['world_name']}/regions.yml", 'w') as write_out:
+            with open(f"{config['server_path']}/plugins/WorldGuard/worlds/{config['world_name']}/regions.yml", 'w') as write_out:
                 out = yaml.dump(wg_conf, write_out)
-                logging.info(f"Wrote all regions to plugins/WorldGuard/worlds/{config['world_name']}/regions.yml")
+                logging.info(f"Wrote all regions to {config['server_path']}/plugins/WorldGuard/worlds/{config['world_name']}/regions.yml")
                 run_screen("rg reload")
         except:
-            logging.error(f"Unable to write regions to plugins/WorldGuard/worlds/{config['world_name']}/regions.yml")
+            logging.error(f"Unable to write regions to {config['server_path']}/plugins/WorldGuard/worlds/{config['world_name']}/regions.yml")
     else:
         logging.debug('No changes being made to WorldGuard')
 
@@ -228,13 +256,14 @@ def write_rpgregions(wg_conf, rpg_def):
     articles = ['a', 'an', 'of', 'the', 'is']
     run_screen("rpgregions save")
     for key in wg_conf['regions'].keys():
-        if os.path.exists(f'../plugins/RPGRegions/regions/{key}.json'):
+        if os.path.exists(f"{config['server_path']}/plugins/RPGRegions/regions/{key}.json"):
             overwrite_region = False
             if unattended:
                 logging.debug(f"'{key}' already exists in RPGRegions. Skipping...")
                 overwrite_region = False
             else:
-                overwrite_region = {"y":True,"n":False}[input(f'{key} already exists. Do you wish to overwrite the RPGRegions file? (y/N)').lower().strip() or 'n']
+                overwrite_region = {"y":True,"n":False}[input(f'{key} already exists.' \
+                    'Do you wish to overwrite the RPGRegions file? (y/N)').lower().strip() or 'n']
             if overwrite_region:
                 new_regions_rpg.append(key)
         else:
@@ -251,8 +280,8 @@ def write_rpgregions(wg_conf, rpg_def):
         ]
         nr['location']['world'] = config['world_name']
         try:
-            with open(f'../plugins/RPGRegions/regions/{region}.json', 'w') as file:
-                logging.info(f'Writing new region to ../plugins/RPGRegions/regions/{region}.json')
+            with open(f"{config['server_path']}/plugins/RPGRegions/regions/{region}.json", 'w') as file:
+                logging.info(f"Writing new region to {config['server_path']}/plugins/RPGRegions/regions/{region}.json")
                 json.dump(nr, file, indent=2, sort_keys=False)
                 rpg_changes = True
         except:
@@ -275,7 +304,8 @@ def main():
     if unattended:
         logging.info('Starting script in unattended mode')
     if args.rpg_only and args.wg_only:
-        logging.warning("You can't eat the cake and have it too, you have to pick. Less arguments please.")
+        logging.warning("You can't eat the cake and have it too, you have to pick. Less" \
+                         "arguments please.")
         exit(1)
     load_config()
     dm_conf, wg_conf = load_files()
